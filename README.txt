@@ -1,1 +1,1 @@
-A javascript-based calculator and relevant test as an exercise on designing an interface.
+A javascript-based calculator and relevant unit tests as an exercise on designing an interface.
