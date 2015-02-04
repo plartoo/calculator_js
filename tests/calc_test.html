@@ -1,0 +1,293 @@
+    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+          "http://www.w3.org/TR/html4/loose.dtd">  
+    <html>  
+      <head>  
+        <link rel="stylesheet" href="../css/qunit.css" type="text/css"/>
+        <script type="text/javascript" src="../lib/qunit.js"></script>
+        <script type="text/javascript" src="../calc.js"></script>
+        <script type="text/javascript">
+
+            // setup
+            var before = {
+                setup: function () {
+                    var c = 'what is my name';
+                }
+            };
+            
+            
+            module('Testing utility function that does comma separation');
+            test('all kinds of string must be properly comma separated', 9, function () {
+                var args = {
+                    '0':'0', '123':'123', '1234':'1,234',
+                    '1234567890123456': '1,234,567,890,123,456',
+                    '1.06': '1.06',
+                    '123.0678': '123.0678',
+                    '1234.0678': '1,234.0678',
+                    '1234567890.12345': '1,234,567,890.12345',
+                    '-1234567890.123': '-1,234,567,890.123',
+                };
+
+                var c = new calculator();
+                var count = 0;
+                for (var i in args){
+                    equal(c.addCommas(i), args[i], 'test ' + count);}
+                    count++;
+            });
+            
+
+            module('Testing calculator object creation');
+            test('default attributes must be correctly set', 6, function () {
+                var c = new calculator();
+                
+                equal( c.display, '0', 'test 1');
+                equal( c.curOperand, 0, 'test 2');
+                equal( c.operator, null, 'test 3');
+                equal( c.lastCharType, 'num', 'test 4');
+                equal( c.errored, false, 'test 5');
+                equal( c.cache, 0, 'test 6');
+
+            });
+            
+            test('configs passed in as parameters must be correctly set', 2, function () {
+                var configs = {'comma':'1', 'logbase':'10'};
+                var c = new calculator(configs);
+                
+                equal( c.comma(), '1', 'test 1');
+                equal( c.logbase(), '10', 'test 2');
+
+            });
+
+            test('config attributes must be directly reset-able', 2, function () {
+                var configs = {'comma':'1', 'logbase':'10'};
+                var c = new calculator(configs);
+                var v = 'something wrong';
+                c.setCookie('comma', v);
+                c.setCookie('logbase', -1);
+
+                equal( c.comma(), v, 'test 1');
+                equal( c.logbase(), -1, 'test 2');
+            });
+
+            module('Testing methods of Calculator object');
+            test('method name - allReset', 8, function () {
+                var configs = {'comma':'1', 'logbase':'10'};
+                var c = new calculator(configs);
+                var e = 'dummystr';
+                
+                c.display = e;
+                c.curOperand = e;
+                c.operator = e;
+                c.answer = e;
+                c.lastCharType = e;
+                c.errored = e;
+                c.multiplier = e;
+                c.setCookie('comma', e);
+                c.setCookie('logbase', e);
+
+                c.allReset();
+                equal(c.display, '0', 'test 1');
+                equal(c.curOperand, 0, 'test 2');
+                equal(c.operator, null, 'test 3');
+                equal( c.lastCharType, 'num', 'test 4');
+                equal(c.errored, false, 'test 5');
+                equal(c.cache, 0, 'test 6');
+
+                equal(c.comma(), e, 'test 7');
+                equal(c.logbase(), e, 'test 8');
+            });
+            
+            test('method name - getDisplay', 12, function () {
+                var configs = {'comma':'1', 'logbase':'10'};
+                var c = new calculator(configs);
+                c.display = '1234567.890';
+                
+                equal( c.comma(), true, 'sanity check');      // default: comma ON
+                equal( c.errored, false, 'sanity check');
+                equal( c.getDisplay(), '1,234,567.890', 'comma ON and is NOT error message. must be comma separted');
+                
+                c.errored = true;
+                equal( c.comma(), true, 'sanity check');      // default: comma ON, but errored
+                equal( c.errored, true, 'sanity check');
+                equal( c.getDisplay(), '1234567.890', 'when displaying error messages, the result must NOT be comma separted');                
+
+                c.setCookie('comma', false);                            // comma OFF, regardless of error
+                c.errored = true;
+                equal( c.comma(), false, 'sanity check');
+                equal( c.errored, true, 'sanity check');
+                equal( c.getDisplay(), '1234567.890', 'comma OFF. must NEVER be comma separted');
+
+                c.errored = false;
+                equal( c.comma(), false, 'sanity check');
+                equal( c.errored, false, 'sanity check');
+                equal( c.getDisplay(), '1234567.890', 'comma OFF. must NEVER be comma separted');                
+                
+            });
+            
+            test('method name - push', 9, function () {
+                var c = new calculator();
+                var args = {
+                    '7':'num',
+                    '.':'decimal',
+                    '+':'binary',
+                    'sqrt': 'unary',
+                    'c': 'clear',
+                    'ce': 'clearEntry',
+                    'ba': 'backArrow',
+                    'pm': 'plusMinus',
+                    '=' : 'equal'
+                };
+                
+                var count = 0;
+                for (var i in args){
+                    equal(c.push(i), args[i], 'test ' + count);}
+                    count++;
+            });
+
+            test('method name - charAppend', 7, function(){
+               var c = new calculator();
+               
+               c.display = '12345678901234567';
+               c.charAppend('1');
+               equal(c.display, c.CHAR_ERR, 'test 1 - must put error message when char limit is exceeded');
+               equal(c.errored, true, 'test 2 - must set this.errored');
+//               deepEqual(c.curOperand, NaN, 'test 3 - overflow occurs');
+               equal(c.lastCharType, 'num', 'test 4');
+               
+               c.display = '0'
+               c.charAppend('1');
+               equal(c.display, '1', 'test 5 - when original digit is just one zero');
+//               equal(c.curOperand, 1, 'test 6 - must set the curOperand');
+               equal(c.lastCharType, 'num', 'test 7 - must set the lastCharType');
+
+               c.display = '12.2'
+               c.charAppend('1');
+               equal(c.display, '12.21', 'test 8 - keep appending as usual');
+//               equal(c.curOperand, 12.21, 'test 9 - must set the curOperand');
+               equal(c.lastCharType, 'num', 'test 10 - must set the lastCharType');
+               
+               c.multiplier = -1
+               c.display = '12.2'
+               c.charAppend('1');
+//               equal(c.curOperand, -12.21, 'test 11 - must multiply with the multiplier');
+            });
+
+            test('method name - numericHandler when lastCharType is unary', 5, function(){
+               var c = new calculator();
+
+               c.lastCharType = 'unary';
+               c.operator = 'to check if allReset is called'
+               c.answer = 'to check if allReset is called'
+               c.numericHandler('1');
+               equal(c.display, '1', 'test 1 - must remove original zero in the display');
+//               equal(c.curOperand, 1, 'test 2 - check if curOperand is updated');
+               
+               equal(c.operator, null, 'test 3 - must have called allReset() before appending numbers');
+
+               c.display = '-12.23'
+               c.lastCharType = 'unary';               // reassign because previous test called allReset()
+               c.numericHandler('0');
+               equal(c.display, '0', 'test 4');
+               equal(c.curOperand, 0, 'test 5 - check if curOperand is updated');
+               
+               c.numericHandler('1');
+               equal(c.display, '1', 'test 6 - keep adding number to test 6 result');
+//               equal(c.curOperand, 1, 'test 8 - check if curOperand is updated');
+            });
+
+            test('method name - numericHandler when lastCharType is binary or equal', 4, function(){
+               var c = new calculator();
+               
+               c.display = '-12.0'
+               c.lastCharType = 'binary';
+               c.numericHandler('1');
+               equal(c.display, '1', 'test 1 - must reset the display and append');
+//               equal(c.curOperand, 1, 'test 2 - make sure charAppend() is called');
+               equal(c.lastCharType, 'num', 'test 3 - make sure charAppend() is called');
+               
+               c.display = '-12.0'
+               c.lastCharType = 'equal';
+               c.numericHandler('1');
+               equal(c.display, '1', 'test 4 - must reset the display and append');
+//               equal(c.curOperand, 1, 'test 5 - make sure charAppend() is called');
+               equal(c.lastCharType, 'num', 'test 6 - make sure charAppend() is called');
+            });
+            
+            
+            test('method name - numericHandler when lastCharType is anything else besides unary, binary and equal', 6, function(){
+               var c = new calculator();
+               c.lastCharType = 'anything';
+               c.answer = 'anything';
+               
+               c.numericHandler('1');
+               equal(c.display, '1', 'test 1 - must remove original zero in the display');
+//               equal(c.curOperand, 1, 'test 2 - make sure charAppend() is called');
+               equal(c.lastCharType, 'num', 'test 3 - make sure charAppend() is called');
+               equal(c.answer, 'anything', 'test 4 - make sure allReset() is NOT called');
+               
+               c.display = '12'
+               c.numericHandler('1');
+               equal(c.display, '121', 'test 4 - keep appending as usual');
+//               equal(c.curOperand, 121, 'test 5 - make sure charAppend() is called');
+               equal(c.lastCharType, 'num', 'test 6 - make sure charAppend() is called');
+               equal(c.answer, 'anything', 'test 7 - make sure allReset() is NOT called');
+            });
+
+            test('method name - decimalHandler', 9, function(){
+               var c = new calculator();
+               
+               c.display = '0'
+               c.decimalHandler('.');
+               equal(c.display, '0.', 'test 1 - must append decimal even to the end of zero');
+               equal(c.curOperand, 0, 'test 2 - make sure charAppend() is called');
+               equal(c.lastCharType, 'decimal', 'test 3 - make sure lastCharType is set before exiting');
+               
+               c.display = '0.1'
+               c.curOperand = 'something'
+               c.decimalHandler('.');
+               equal(c.display, '0.1', 'test 4 - must NOT append if decimal already exists');
+               equal(c.curOperand, 'something', 'test 5 - make sure charAppend() is NOT called');
+               equal(c.lastCharType, 'decimal', 'test 6 - make sure lastCharType is set before exiting');
+               
+               c.display = '-0.1'
+               c.decimalHandler('.');
+               equal(c.display, '-0.1', 'test 7 - must NOT append if decimal already exists');
+               equal(c.curOperand, 'something', 'test 8 - make sure charAppend() is NOT called');
+               equal(c.lastCharType, 'decimal', 'test 9 - make sure lastCharType is set before exiting');
+            });
+
+            test('method name - plusMinusHandler', 6, function(){
+               var c = new calculator();
+               
+               c.display = '0';
+               c.plusMinusHandler('pm');
+               equal(c.display, '-', 'test 1 - must remove orginal, lonely zero and replace it with minus');
+               equal(c.lastCharType, 'plusMinus', 'test 2 - make sure lastCharType is set before exiting');
+               
+               c.display = '-';
+               c.plusMinusHandler('pm');
+               equal(c.display, '0', 'test 3 - replace with zero if there is a lonely minus in the display');
+               
+               c.display = '-0';
+               c.plusMinusHandler('pm');
+               equal(c.display, '0', 'test 4 - toggle minus');
+               
+               c.display = '1.21';
+               c.plusMinusHandler('pm');
+               equal(c.display, '-1.21', 'test 5 - toggle minus');
+               
+               c.display = '-1.21';
+               c.plusMinusHandler('pm');
+               equal(c.display, '1.21', 'test 6 - toggle minus');
+               
+            });
+            
+        </script>  
+      </head>  
+      <body>  
+        <h1 id="qunit-header">QUnit example</h1>  
+        <h2 id="qunit-banner"></h2>  
+        <h2 id="qunit-userAgent"></h2>  
+        <ol id="qunit-tests">  
+        </ol>  
+      </body>  
+    </html>  

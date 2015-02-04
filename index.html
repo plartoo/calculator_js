@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Pseudo-Scientific Calculator</title>
+<link rel="shortcut icon" href="favicon.ico"/>
+<link rel="stylesheet" href="css/calculator.css" type="text/css" media="all" charset="utf-8"/>
+</head>
+<body>
+  <h1>Pseudo-Scientific Calculator</h1>
+  <div id="calculator">
+    <p id="notice">Max. digit: 17 (without comma)</p>
+    <!-- <p id="notice">Made in China</p> -->
+    <table border="0">
+      <tr>
+        <td colspan="4"><input type="text" name="display" value="0" id="display"/></td>
+        <td colspan="2">
+            <div id="comma" class="field switch">
+                <table>
+                    <tr>
+                        <td>
+                            <p style="font-size: 8pt; font-weight: bold;">Comma:</p>
+                        </td>
+                        <td>
+                            <input type="radio" id="comma-1" name="comma" value="1" checked />
+                            <input type="radio" id="comma-0" name="comma" value="0" />
+                            <label for="comma-1" class="cb-enable selected"><span>ON</span></label>
+                            <label for="comma-0" class="cb-disable"><span>OFF</span></label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div id="logbase" class="field switch">
+                <table>
+                    <tr>
+                        <td>
+                            <p style="font-size: 8pt; font-weight: bold;">Log:</p>
+                        </td>
+                        <td>
+                            <input type="radio" id="logbase-10" name="logbase" value="10" checked />
+                            <input type="radio" id="logbase-2" name="logbase" value="2" />
+                            <label for="logbase-10" class="cb-enable selected"><span>Base 10</span></label>
+                            <label for="logbase-2" class="cb-disable"><span>Base 2</span></label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </td>
+      </tr>
+      <tr style="height:20px"></tr>
+      <tr>
+        <td><button id="clear" value="c" type="button"><span>C</span></button></td>
+        <td><button id="clear_entry" value="ce" type="button"><span>CE</span></button></td>
+        <!-- for back arrow, we can use from among: &lang;&mdash; or <&mdash; or &larr;  -->
+        <td><button id="back_arrow" value="ba" type="button"><span>&larr;</span></button></td>
+        <td><button id="plusmin" class="action_key" value="pm" type="button"><span>&plusmn;</span></button></td>
+        <td><button value="sqrt" type="button"><span>&radic;</span></button></td>
+        <td><button value="**2" type="button"><span>x&sup2;</span></button></td>
+      </tr>
+      <tr>
+        <td><button value="7" type="button"><span>7</span></button></td>
+        <td><button value="8" type="button"><span>8</span></button></td>
+        <td><button value="9" type="button"><span>9</span></button></td>
+        <td><button class="action_key" value="/" type="button"><span>&divide;</span></button></td>
+        <td><button value="%" type="button"><span>%</span></button></td>
+        <td><button value="euler" type="button"><span>e^</span></button></td>
+      </tr>
+      <tr>
+        <td><button value="4" type="button"><span>4</span></button></td>
+        <td><button value="5" type="button"><span>5</span></button></td>
+        <td><button value="6" type="button"><span>6</span></button></td>
+        <td><button class="action_key" value="*" type="button"><span>&times;</span></button></td>
+        <!-- for inverse, we tried: x&minus;&sup1; and x&oline;&sup1; and x&ndash;&sup1; -->
+        <td><button value="inv" type="button"><span>1 &frasl; x</span></button></td>
+        <td><button value="log" type="button"><span>Log</span></button></td>
+      </tr>
+      <tr>
+        <td><button value="1" type="button"><span>1</span></button></td>
+        <td><button value="2" type="button"><span>2</span></button></td>
+        <td><button value="3" type="button"><span>3</span></button></td>
+        <td><button class="action_key" value="-" type="button"><span>&#8722;</span></button></td>
+        <td rowspan="2"><button id="equals" value="=" type="button"><span>=</span></button></td>
+        <td><button value="^" type="button"><span>^</span></button></td>
+      </tr>
+      <tr>
+        <td colspan="2"><button id="zero" value="0" type="button"><span>0</span></button></td>
+        <td><button class="action_key" value="." type="button"><span>.</span></button></td>
+        <td><button class="action_key" value="+" type="button"><span>&#43;</span></button></td>
+        <td><button value="exp" type="button"><span>EXP</span></button></td>
+      </tr>
+    </table>
+    <p id="credit">
+      <a href="https://github.com/skorecky/JavaScript-Calculator">Template adapted from Stephen Korecky's calculator on Github</a>
+    </p>
+  </div>
+
+  <script src="lib/jquery.js"></script>
+  <script src="lib/jquery.cookie.js"></script>
+  <script src="utils.js"></script>
+
+  <script type='text/javascript'>
+
+      
+      $('document').ready( function(){
+          // POTENTIAL BOMBS: global parameters in jQuery
+          var cookies = {'comma': '1', 'logbase': '10'};        // default cookies and values
+          var optional_attrs = { expires: 365, path: '/' }  // optional cookie attributes
+
+          // load existing cookies and assign default values to those that aren't loaded yet
+          configs = loadCookies(cookies, optional_attrs);
+          // update button positions if different from default cookies
+          syncConfigButtons(cookies);
+
+
+          /* Main: calculator functionality */
+          var calc = new calculator(configs);
+          var $display = $('#display');
+
+          $('button').click(function(){
+              calc.push($(this).val());
+              var output = calc.getDisplay();
+              $display.val(output);
+          });
+
+
+          /* Handles configuration button updates */
+          $(".cb-enable").click(function(){
+              var parent = $(this).parents('.switch'); // update buttons
+              $('.cb-disable',parent).removeClass('selected');
+              $(this).addClass('selected');
+
+              var attr = $(this).attr('for').split('-'); // update cookie
+              $.cookie( attr[0] , attr[1], optional_attrs);
+              calc.setCookie(attr[0], attr[1]);
+              
+              if (attr[0] == 'logbase'){
+                  $("button[value='log']").text('Log').width(70).height(48);
+              }
+              //alert('comma' + $.cookie('comma'));
+              //alert('logbase' + $.cookie('logbase'));
+            });
+
+          $(".cb-disable").click(function(){
+              var parent = $(this).parents('.switch');
+              $('.cb-enable',parent).removeClass('selected');
+              $(this).addClass('selected');
+                
+              var attr = $(this).attr('for').split('-');
+              $.cookie( attr[0] , attr[1], optional_attrs );
+              calc.setCookie(attr[0], attr[1]);
+              
+              if (attr[0] == 'logbase'){
+                  // this is a hack and it changes the appearance of the button subtly
+                  // but i don't have enough knowledge to know changing text with 
+                  // jQuery affects the size of the original HTML button
+                  $("button[value='log']").text('ln').width(70).height(48);
+              }
+              //alert('comma' + $.cookie('comma'));
+              //alert('logbase' + $.cookie('logbase'));
+          });
+          
+          
+          /* Keyboard bindings */
+          $(document).keydown(function(e) {
+              var keyID = e.keyCode;
+              var keyValue;
+              
+              if ((keyID == 49) || (keyID == 97))
+                  keyValue = '1';
+              else if ((keyID == 50) || (keyID == 98))
+                  keyValue = '2';
+              else if ((keyID == 51) || (keyID == 99))
+                  keyValue = '3';
+              else if ((keyID == 52) || (keyID == 100))
+                  keyValue = '4';
+              else if ((keyID == 53) || (keyID == 101))
+                  keyValue = '5';
+              else if ((keyID == 54) || (keyID == 102))
+                  keyValue = '6';
+              else if ((keyID == 55) || (keyID == 103))
+                  keyValue = '7';
+              else if ((keyID == 56) || (keyID == 104))
+                  keyValue = '8';
+              else if ((keyID == 57) || (keyID == 105))
+                  keyValue = '9';
+              else if ((keyID == 48) || (keyID == 96))
+                  keyValue = '0';
+              else if ((keyID == 110) || (keyID == 190))
+                  keyValue = '.';
+              // SKIPPED: plusMinus
+              else if ((keyID == 13) || (keyID == 61))
+                  keyValue = '=';
+              else if (keyID == 106)
+                  keyValue = '*';
+              else if (keyID == 107)
+                  keyValue = '+';
+              else if (keyID == 109)
+                  keyValue = '-';
+              else if (keyID == 111)    // In Firefox, this clashes with Quick Search
+                  keyValue = '/';
+              else if (keyID == 68)     // 'd' for %
+                  keyValue = '%';
+              else if (keyID == 80)     // 'p' for ^ (power)
+                  keyValue = '^';
+              else if (keyID == 88)     // 'x' for exp
+                  keyValue = 'exp';
+              else if (keyID == 82)     // 'r' for sqrt
+                  keyValue = 'sqrt';
+              else if (keyID == 83)     // 's' for square
+                  keyValue = 'sqrt';
+              else if (keyID == 69)     // 'e' for power of euler const
+                  keyValue = 'euler';
+              else if (keyID == 73)     // 'i' for inverse
+                  keyValue = 'inv';
+              else if (keyID == 76)     // 'l' for inverse
+                  keyValue = 'log';
+              else if (keyID == 27)     // 'esc' for CLEAR
+                  keyValue = 'c';
+              else if (keyID == 46)     // 'delete' key for CLEAR ENTRY
+                  keyValue = 'ce';
+              else if (keyID == 8)     // 'backspace' for backArrow
+                  keyValue = 'ba';
+              
+              calc.push(keyValue);
+              var output = calc.getDisplay();
+              $display.val(output);
+
+          });
+
+        });
+    </script>
+  <script type="text/javascript" src="calc.js"></script>
+</body>
+</html>
+

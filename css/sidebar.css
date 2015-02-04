@@ -1,0 +1,41 @@
+/* Adapted from: http://devheart.org/articles/jquery-collapsible-sidebar-layout/ */
+
+
+#sidebar {
+    border-radius: 15px;
+    line-height: 200px;
+    text-align: center;
+    background-color: #C6C6C6;
+    display: none;
+}
+ 
+.use-sidebar #content {width: 100%;}
+.use-sidebar #sidebar {
+    display: block;
+    width: 100%;
+}
+ 
+.sidebar-at-left #sidebar {margin-right: 1%;}
+.sidebar-at-right #sidebar {margin-left: 1%;}
+ 
+.sidebar-at-left #content, .use-sidebar.sidebar-at-right #sidebar, .sidebar-at-right #separator {float: right;}
+.sidebar-at-right #content, .use-sidebar.sidebar-at-left #sidebar, .sidebar-at-left #separator {float: auto;}
+ 
+#separator {
+    background-color: #EEE;
+    border: 1px solid #CCC;
+    display: block;
+    outline: none;
+    height: 200px;
+    width: -1%;
+}
+.use-sidebar #separator {
+	height: 20px;
+    background: url('../img/vertical-separator.gif') repeat-y center top;
+    border-color: #C6C6C6;
+	float: auto;
+}
+#separator:hover {
+    border-color: #ABC;
+    background: #DEF;
+}

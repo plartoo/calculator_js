@@ -1,0 +1,80 @@
+    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  
+          "http://www.w3.org/TR/html4/loose.dtd">  
+    <html>  
+      <head>  
+        <link rel="stylesheet" href="../css/qunit.css" type="text/css"/>  
+	<script src="../lib/jquery.js"></script>
+        <script src="../lib/jquery.cookie.js"></script>
+        <script type="text/javascript" src="../utils.js"></script>
+        <script type="text/javascript" src="../lib/qunit.js"></script>
+        <script type="text/javascript">
+
+            // setup
+            var before = {
+                setup: function () { // make all lingering cookies expire
+                    cookies = document.cookie.split('; ')
+                    for (var i = 0, c; (c = (cookies)[i]) && (c = c.split('=')[0]); i++) {
+                        document.cookie = c + '=; expires=' + new Date(0).toUTCString();
+                    }
+                }
+            };
+
+
+            module('Unit testing of cookie-related utils', before);
+            
+            test('deleteCookies deletes all cookies in the list', 3, function () {
+
+                document.cookie = 'one=1';
+                document.cookie = 'two=2';
+                var cookies = {'one': 1, 'two': 2};
+                var delete_count = deleteCookies(cookies);
+
+                equal(( $.cookie('one') == null ), true, 'deleted the first cookie');
+                equal(( $.cookie('two') == null ), true, 'deleted the second cookie');
+                equal(delete_count, 2, 'Total number of deleted cookies must be 2');
+            });
+
+            test('deleteCookies deletes only the specified cookie', 3, function () {
+
+                document.cookie = 'one=1';
+                document.cookie = 'two=2';
+                var cookies = {'one': 1};
+                var delete_count = deleteCookies(cookies);
+
+                equal(( $.cookie('one') == null ), true, 'deleted the first cookie');
+                equal(( $.cookie('two') == 2 ), true, 'must NOT delete the second cookie');
+                equal(delete_count, 1, 'Total number of deleted cookies must be 1');
+            });
+            
+            test('loadCookies when no cookies were loaded', 3, function () {
+
+                var cookies = {'one': 1, 'two': 2};
+                var cur_cookies = loadCookies(cookies);
+
+                equal(( $.cookie('one') == 1 ), true, 'loaded the first cookie');
+                equal(( $.cookie('two') == 2 ), true, 'loaded the second cookie');
+                deepEqual(cur_cookies, cookies, 'must return both cookies we passed in');
+            });
+
+            test('loadCookies when one cookie is already loaded', 3, function () {
+                
+                document.cookie = 'one=222';
+
+                var cookies = {'one': '1', 'two': '2'};
+                var cur_cookies = loadCookies(cookies);
+
+                equal(( $.cookie('one') == '222' ), true, 'the first cookie should already be loaded');
+                equal(( $.cookie('two') == '2' ), true, 'loaded the second cookie');
+                deepEqual(cur_cookies, {'one': '222', 'two': '2'}, 'Total number of loaded cookies must be 1');
+            });
+
+        </script>  
+      </head>  
+      <body>  
+        <h1 id="qunit-header">QUnit example</h1>  
+        <h2 id="qunit-banner"></h2>  
+        <h2 id="qunit-userAgent"></h2>  
+        <ol id="qunit-tests">  
+        </ol>  
+      </body>  
+    </html>  
